@@ -1,398 +1,576 @@
-<!doctype html> 
-<html lang="en"> 
-<head> 
-	<meta charset="UTF-8" />
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
     <title>Phaser - Making your first game, part 9</title>
-	<script type="text/javascript" src="js/phaser.min.js"></script>
+    <script type="text/javascript" src="js/phaser.min.js"></script>
     <style type="text/css">
         body {
             margin: 0;
+        background: url(assets/fondoo1.jpg) ;
+            background-size: cover;
+             -webkit-background-size: cover;
+  -moz-background-size: cover;
+  -o-background-size: cover;
         }
+        canvas { margin: auto;}
     </style>
 </head>
+
 <body>
 
-    
-    <div class="juego" >
-<script type="text/javascript">
 
-var game = new Phaser.Game(800, 600, Phaser.AUTO, '', { preload: preload, create: create, update: update });
+    <div class="juego">
+        <script type="text/javascript">
+            var game = new Phaser.Game(800, 600, Phaser.AUTO, '', {
+                preload: preload,
+                create: create,
+                update: update
+            });
 
-function preload() {
+            function preload() {
 
-    game.load.image('sky', 'assets/sky.png');
-    game.load.image('suelo', 'assets/suelo.png');
-    game.load.image('star', 'assets/star.png');
-    game.load.image('bullet', 'assets/pincho.png');
-    game.load.image('ground', 'assets/platform.png');
-    game.load.image('regadera', 'assets/regadera.png');
-        game.load.image('ground2', 'assets/platformMedia.png');
-            game.load.image('vida', 'assets/vida.png');
-        game.load.image('ground3', 'assets/platformpeque.png');
-       game.load.spritesheet('dude', 'assets/dude.png', 87.0, 0);
-    game.load.spritesheet('zombie', 'assets/metalslug_mummy37x45.png', 37, 45, 18);
-    game.load.image('enemyBullet', 'assets/enemybullet.png');
+                game.load.image('sky', 'assets/sky.png');
+                game.load.image('suelo', 'assets/suelo.png');
+                game.load.image('star', 'assets/star.png');
+                game.load.image('bullet', 'assets/pincho.png');
+                game.load.image('ground', 'assets/platform.png');
+                game.load.image('regadera', 'assets/regadera.png');
+                game.load.image('ground2', 'assets/platformMedia.png');
+                game.load.image('vida', 'assets/vida.png');
+                game.load.image('jefe', 'assets/jefe.png');
+                game.load.image('ground3', 'assets/platformpeque.png');
+                game.load.spritesheet('dude', 'assets/dude.png', 87.0, 0);
+                game.load.spritesheet('zombie', 'assets/metalslug_mummreves.png', 37, 45, 18);
+                game.load.image('enemyBullet', 'assets/enemybullet.png');
+                game.load.spritesheet('kaboom', 'assets/explode.png', 128, 128);
+game.load.spritesheet('torreta', 'assets/dalek.png', 47, 78);
+            }
+    var regadera3;
+    var posicion;
+            var player;
+            var platforms;
+            var cursors;
+            var regadera;
+            var stars;
+            var score = 0;
+            var scoreText;
+            var explosions;
+            var enemies;
+            var bullets;
+            var fireRate = 100;
+            var nextFire = 0;
+            var enemyFinal;
+            var arriba;
+            var izquierda;
+            var derecha;
+            var finalEnemy;
+            var livingEnemies = [];
+            var enemyBullet;
+            var enemyBullet;
+            var enemies;
+            var lives;
+            var livesBoss = 20;
+            var regadera2;
+
+            function create() {
 
 
-}
+                //  We're going to be using physics, so enable the Arcade Physics system
+                game.physics.startSystem(Phaser.Physics.ARCADE);
 
-var player;
-var platforms;
-var cursors;
-var regadera;
-var stars;
-var score = 0;
-var scoreText;
+                //  A simple background for our game
+                game.add.sprite(0, 0, 'sky');
 
-var enemies;
-var bullets;
-var fireRate = 100;
-var nextFire = 0;
-    
-var arriba;
-var izquierda;
-var derecha;
-    
-    var livingEnemies = [];
-var enemyBullet;
-var enemies;
-var lives;
-    var regadera2;
-function create() {
-    
+                //  The platforms group contains the ground and the 2 ledges we can jump on
+                platforms = game.add.group();
 
-    //  We're going to be using physics, so enable the Arcade Physics system
-    game.physics.startSystem(Phaser.Physics.ARCADE);
+                //  We will enable physics for any object that is created in this group
+                platforms.enableBody = true;
 
-    //  A simple background for our game
-    game.add.sprite(0, 0, 'sky');
+                // Here we create the ground.
+                setInterval(crearzombie, 5000);
+                var ground = platforms.create(0, game.world.height - 50, 'suelo');
 
-    //  The platforms group contains the ground and the 2 ledges we can jump on
-    platforms = game.add.group();
+                //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
+                ground.scale.setTo(2, 0.35);
 
-    //  We will enable physics for any object that is created in this group
-    platforms.enableBody = true;
+                //  This stops it from falling away when you jump on it
+                ground.body.immovable = true;
 
-    // Here we create the ground.
- 
-     var ground = platforms.create(0, game.world.height - 50, 'suelo');
-
-    //  Scale it to fit the width of the game (the original sprite is 400x32 in size)
-    ground.scale.setTo(1, 0.35);
-
-    //  This stops it from falling away when you jump on it
-    ground.body.immovable = true;
-
-    //  Now let's create two ledges
-    var ledge = platforms.create(400, 400, 'ground');
+                //  Now let's create two ledges
+                var ledge = platforms.create(400, 450, 'ground');
     ledge.body.immovable = true;
 
     ledge = platforms.create(750, 400, 'ground');
     ledge.body.immovable = true;
     
-    ledge = platforms.create(1150, 280, 'ground2');
+    ledge = platforms.create(1100, 280, 'ground2');
     ledge.body.immovable = true;
     
     
-    ledge = platforms.create(1500, 150, 'ground3');
+    ledge = platforms.create(1400, 150, 'ground3');
     ledge.body.immovable = true;
-lives = game.add.group();
+    
+    ledge = platforms.create(1580, 350, 'ground3');
+    ledge.body.immovable = true;
 
-    regadera = game.add.group();
+    
+    ledge = platforms.create(1800, 450, 'ground2');
+    ledge.body.immovable = true;
+
+    ledge = platforms.create(2100, 350, 'ground3');
+    ledge.body.immovable = true;
+    
+     ledge = platforms.create(2450, 350, 'ground3');
+    ledge.body.immovable = true;
+                lives = game.add.group();
+                regadera = game.add.group();
     regadera.enableBody = true;
-    var rega = regadera.create(400, 100, 'regadera');
-    rega.body.bounce.y = 0.1;
-    rega.body.gravity.y = 400;
-     regadera2 = game.add.group();
-    regadera2.enableBody = true;
-    var rega2 = regadera2.create(1512, 110, 'regadera');
+    var rega = regadera.create(475, 100, 'regadera');
     rega.body.bounce.y = 0.5;
     rega.body.gravity.y = 400;
     
+    //segunda regadera
     
-    // The player and its settings
-    player = game.add.sprite(32, game.world.height - 150, 'dude');
-    game.camera.follow(player);
-    //  We need to enable physics on the player
-    game.physics.arcade.enable(player);
+    regadera2 = game.add.group();
+    regadera2.enableBody = true;
+    var rega2 = regadera2.create(1410, 110, 'regadera');
+    rega.body.bounce.y = 0.5;
+    rega.body.gravity.y = 400;
+    
+    regadera3 = game.add.group();
+    regadera3.enableBody = true;
+    var rega3 = regadera3.create(2460, 308, 'regadera');
+    rega.body.bounce.y = 0.5;
+    rega.body.gravity.y = 400;
 
-    //  Player physics properties. Give the little guy a slight bounce.
-    enemies = game.add.group();
-    
-    enemies.enableBody = true;
-    
-     for (var i = 0; i < 3; i++)
+
+                // The player and its settings
+                player = game.add.sprite(32, game.world.height - 150, 'dude');
+                game.camera.follow(player);
+                //  We need to enable physics on the player
+                
+                game.physics.arcade.enable(player);
+                //  Player physics properties. Give the little guy a slight bounce.
+                enemies = game.add.group();
+
+                enemies.enableBody = true;
+                enemyFinal = game.add.group();
+                enemyFinal.enableBody = true;
+                finalEnemy = regadera2.create(2712, 110, 'jefe');
+                finalEnemy.body.bounce.y = 0.5;
+                finalEnemy.body.gravity.y = 400;
+
+                player.body.bounce.y = 0.2;
+                 player.body.gravity.y = 400;
+                player.body.collideWorldBounds = true;
+
+                //  Our two animations, walking left and right.
+                player.animations.add('right', [0, 1, 2, 3], 10, true);
+                player.animations.add('left', [5, 6, 7, 8], 10, true);
+
+                //  Finally some stars to collect
+                stars = game.add.group();
+
+                //  We will enable physics for any star that is created in this group
+                stars.enableBody = true;
+
+                //  Here we'll create 12 of them evenly spaced apart
+
+
+                //  The score
+                scoreText = game.add.text(16, 16, 'score: 0', {
+                    fontSize: '32px',
+                    fill: '#000'
+                });
+
+                explosions = game.add.group();
+                explosions.createMultiple(30, 'kaboom');
+                explosions.forEach(explosionOk, this);
+                //  Our controls.
+                cursors = game.input.keyboard.createCursorKeys();
+crearzombieinicio1();crearzombieinicio2();crearzombieinicio3();
+                izquierda = game.input.keyboard.addKey(Phaser.Keyboard.A);
+                derecha = game.input.keyboard.addKey(Phaser.Keyboard.D);
+                arriba = game.input.keyboard.addKey(Phaser.Keyboard.W);
+                bullets = game.add.group();
+                bullets.enableBody = true;
+                bullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+                bullets.createMultiple(5, 'bullet');
+                bullets.setAll('checkWorldBounds', true);
+                bullets.setAll('outOfBoundsKill', true);
+                enemyBullets = game.add.group();
+                enemyBullets.enableBody = true;
+                enemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
+                enemyBullets.createMultiple(1, 'enemyBullet');
+                enemyBullets.setAll('outOfBoundsKill', true);
+                enemyBullets.setAll('checkWorldBounds', true);
+                for (var i = 0; i < 3; i++) {
+                    var ship = lives.create(game.world.width - 100 + (30 * i), 60, 'vida');
+                    ship.anchor.setTo(0.5, 0.5);
+                    ship.angle = 90;
+                    ship.alpha = 0.4;
+                }
+                stateText = game.add.text(game.world.centerX, game.world.centerY, ' ', {
+                    font: '84px Arial',
+                    fill: '#fff'
+                });
+                stateText.anchor.setTo(0.5, 0.5);
+                stateText.visible = false;
+                torretas = game.add.group();
+torretas.enableBody = true;
+
+ for (var i = 0; i < 3; i++)
     {
+        if(i==0){
+            posicion=530;
+        }else if(i==1){
+            posicion=1595;
+        }else{
+            posicion=2115;
+        }
         //  Create a star inside of the 'stars' group
-        var enemy = enemies.create(i * 180, 0, 'zombie');
+        var torre = torretas.create(posicion, 0, 'torreta');
 
+        //  Let gravity do its thing
+        torre.body.gravity.y = 300;
+
+        //  This just gives each star a slightly random bounce value
+        torre.body.bounce.y = 0;
+        torre.body.velocity.x = 0;
+    }
+
+            }
+
+            function update() {
+                
+                score = 10;
+                enemyFires();
+                if (player.position.x > 390 && player.position.x < 2520) {
+                    scoreText.position.x = player.position.x - 390;
+                    lives.position.x = player.position.x - 390;
+                }
+                if (game.input.activePointer.isDown && score > 0) {
+                    fire();
+                }
+
+                game.physics.arcade.overlap(enemyBullets, player, enemyHitsPlayer, null, this);
+                game.physics.arcade.overlap(player, enemies, enemyHitsPlayer, null, this);
+
+                game.physics.arcade.collide(regadera, platforms);
+                game.physics.arcade.overlap(player, regadera, recogerRegadera, null, this);
+
+                game.physics.arcade.collide(player, platforms);
+game.physics.arcade.collide(torretas, platforms);
+    game.physics.arcade.collide(regadera3, platforms);
+game.physics.arcade.overlap(player, regadera3, recogerRegadera3, null, this); 
+                game.physics.arcade.overlap(torretas, bullets, matartorre, null, this); 
+                game.physics.arcade.collide(enemies, platforms);
+                //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
+                game.physics.arcade.overlap(player, stars, collectStar, null, this);
+                game.physics.arcade.overlap(bullets, platforms, borrarBala, null, this);
+                game.physics.arcade.overlap(enemies, bullets, matarzombie, null, this);
+                game.physics.arcade.collide(regadera2, platforms);
+                game.physics.arcade.overlap(player, regadera2, recogerRegadera2, null, this);
+                game.physics.arcade.overlap(bullets, finalEnemy, playerHitsBoss, null, this);
+                //  Reset the players velocity (movement)
+                player.body.velocity.x = 0;
+
+                if (izquierda.isDown) {
+                    //  Move to the left
+                    player.body.velocity.x = -150;
+
+                    player.animations.play('left');
+                } else if (derecha.isDown) {
+                    //  Move to the right
+                    player.body.velocity.x = 150;
+
+                    player.animations.play('right');
+                } else {
+                    //  Stand still
+                    player.animations.stop();
+
+                    player.frame = 4;
+                }
+
+                //  Allow the player to jump if they are touching the ground.
+                if (arriba.isDown && player.body.touching.down) {
+                    player.body.velocity.y = -350;
+                }
+
+
+            }
+            setInterval(gotas, 1000);
+            function enemyFires() {
+
+                //  Grab the first bullet we can from the pool
+                enemyBullet = enemyBullets.getFirstExists(false);
+  
+
+                livingEnemies.length = 0;
+
+                enemies.forEachAlive(function(enemy){
+        if(enemy.body.position.x<0){
+            enemy.kill();
+        }    
+       });
+    enemies.forEachAlive(function(rega){
+        if((rega.body.position.x-player.body.position.x)<300&&(rega.body.position.x-player.body.position.x)>-300){
+        // put every living enemy in an array
+        livingEnemies.push(rega);
+        }
+    });
+                if(player.position.x > 2400)
+                {
+                    enemies.callAll('kill');
+                    livingEnemies.push(enemyFinal);
+                    if (enemyBullet && livingEnemies.length > 0) {
+
+                    var random = game.rnd.integerInRange(0, livingEnemies.length - 1);
+                    // randomly select one of them
+                    var shooter1 = finalEnemy;
+                    // And fire the bullet from this enemy
+                    enemyBullet.reset(shooter1.body.x, shooter1.body.y, true);
+                    game.physics.arcade.moveToObject(enemyBullet, player, 400);
+                    firingTimer = game.time.now + 2000;
+                    }
+                }
+                else{
+                if (enemyBullet && livingEnemies.length > 0) {
+
+                    var random = game.rnd.integerInRange(0, livingEnemies.length - 1);
+
+                    // randomly select one of them
+                    var shooter1 = livingEnemies[random];
+                    var shooter2 = livingEnemies[random];
+
+                    // And fire the bullet from this enemy
+                    enemyBullet.reset(shooter1.body.x, shooter1.body.y, true);
+                    game.physics.arcade.moveToObject(enemyBullet, player, 400);
+                    firingTimer = game.time.now + 2000;
+                }
+                }
+
+
+            }
+
+            function enemyHitsPlayer(player, bullet) {
+
+                bullet.kill();
+
+                live = lives.getFirstAlive();
+
+                if (live) {
+                    live.kill();
+                }
+
+                var explosion = explosions.getFirstExists(false);
+                explosion.reset(player.body.x, player.body.y);
+                explosion.play('kaboom', 30, false, true);
+
+                // When the player dies
+                if (lives.countLiving() < 1) {
+                    if (player.position.x > 390 && player.position.x < 1520) {
+                        stateText.position.x = player.position.x;
+                    }
+                    if (player.position.x > 1520 && player.position.x < 1920) {
+                        stateText.position.x = player.position.x - 300;
+                    }
+                    player.kill();
+                    enemyBullets.callAll('kill');
+                    score = 0;
+                    enemies.callAll('kill');
+                    stateText.text = " GAME OVER";
+                    stateText.visible = true;
+
+                }
+
+            }
+            function playerHitsBoss(player, bullet) {
+
+                bullet.kill();
+
+                var explosion = explosions.getFirstExists(false);
+                explosion.reset(player.body.x, player.body.y);
+                explosion.play('kaboom', 30, false, true);
+                livesBoss--;
+                console.log(livesBoss);
+                // When the player dies
+                if (livesBoss < 1) {
+                    if (player.position.x > 390 && player.position.x < 1520) {
+                        stateText.position.x = player.position.x;
+                    }
+                    if (player.position.x > 1520 && player.position.x < 1920) {
+                        stateText.position.x = player.position.x - 300;
+                    }
+                    player.kill();
+                    enemyBullets.callAll('kill');
+                    score = 0;
+                    enemies.callAll('kill');
+                    finalEnemy.kill();
+                    enemyBullets.callAll('kill');
+                    stateText.text = " Tu ganas !";
+                    stateText.visible = true;
+
+                }
+
+            }
+function crearzombie(){
+          //  Create a star inside of the 'stars' group
+        var enemy = enemies.create(2500, 500, 'zombie');
+        enemy.animations.add('right', [1,2,3,4,5,6,7,8,9,10,11,12,13], 10, true);
+        enemy.animations.play('right');
         //  Let gravity do its thing
         enemy.body.gravity.y = 300;
 
         //  This just gives each star a slightly random bounce value
         enemy.body.bounce.y = 0;
-        enemy.body.velocity.x = 120;
-                enemy.animations.add('walk');
-
-    enemy.animations.play('walk', 50, true);
-         enemy.body.collideWorldBounds = true;
+        enemy.body.velocity.x = -120;
+        enemy.animations.add('walk');
+        enemy.animations.play('walk', 20, true);        
     }
-    player.body.bounce.y = 0.2;
-    player.body.gravity.y = 300;
-    player.body.collideWorldBounds = true;
+            function collectStar(player, star) {
 
-    //  Our two animations, walking left and right.
-    player.animations.add('right', [0, 1, 2, 3], 10, true);
-    player.animations.add('left', [5, 6, 7, 8], 10, true);
+                // Removes the star from the screen
+                star.kill();
 
-    //  Finally some stars to collect
-    stars = game.add.group();
+                //  Add and update the score
+                score += 1;
+                scoreText.text = 'Score: ' + score;
+            }
 
-    //  We will enable physics for any star that is created in this group
-    stars.enableBody = true;
+            function borrarBala(bullets, platforms) {
+                // Removes the star from the screen
+                bullets.kill();
+            }
 
-    //  Here we'll create 12 of them evenly spaced apart
+            function matarzombie(bullets, enemy) {
+                // Removes the star from the screen
+                bullets.kill();
+                enemy.kill();
+                var explosion = explosions.getFirstExists(false);
+                explosion.reset(enemy.body.x, enemy.body.y);
+                explosion.play('kaboom', 30, false, true);
+            }
 
+            function render() {
 
-    //  The score
-    scoreText = game.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+                game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
+                game.debug.spriteInfo(sprite, 32, 450);
 
-    
-    //  Our controls.
-    cursors = game.input.keyboard.createCursorKeys();
-    
-	izquierda = game.input.keyboard.addKey(Phaser.Keyboard.A);
-    derecha = game.input.keyboard.addKey(Phaser.Keyboard.D);
-    arriba = game.input.keyboard.addKey(Phaser.Keyboard.W);
-    bullets = game.add.group();
-    bullets.enableBody = true;
-    bullets.physicsBodyType = Phaser.Physics.ARCADE;
-    
-    bullets.createMultiple(5, 'bullet');
-    bullets.setAll('checkWorldBounds', true);
-    bullets.setAll('outOfBoundsKill', true);
-enemyBullets = game.add.group();
-    enemyBullets.enableBody = true;
-    enemyBullets.physicsBodyType = Phaser.Physics.ARCADE;
-    enemyBullets.createMultiple(3, 'enemyBullet');
-    enemyBullets.setAll('outOfBoundsKill', true);
-    enemyBullets.setAll('checkWorldBounds', true);
-        for (var i = 0; i < 3; i++) 
-    {
-        var ship = lives.create(game.world.width - 100 + (30 * i), 60, 'vida');
-        ship.anchor.setTo(0.5, 0.5);
-        ship.angle = 90;
-        ship.alpha = 0.4;
-    }
-    stateText = game.add.text(game.world.centerX,game.world.centerY,' ', { font: '84px Arial', fill: '#fff' });
-    stateText.anchor.setTo(0.5, 0.5);
-    stateText.visible = false;
-    
-}
+            }
 
-function update() {
-  enemyFires();
-    if(player.position.x > 390 && player.position.x < 1520)
-    {
-        scoreText.position.x = player.position.x-390;
-        lives.position.x = player.position.x-390;
-    }
-     if (game.input.activePointer.isDown && score>0)
-    {
-        fire();
-    }
-    
-game.physics.arcade.overlap(enemyBullets, player, enemyHitsPlayer, null, this);
-    game.physics.arcade.overlap(player, enemies, enemyHitsPlayer, null, this);
-    
-game.physics.arcade.collide(regadera, platforms);
-game.physics.arcade.overlap(player, regadera, recogerRegadera, null, this);
+            function fire() {
+                if (game.time.now > nextFire && bullets.countDead() > 0) {
+                    nextFire = game.time.now + fireRate;
+                    var bullet = bullets.getFirstDead();
+                    bullet.rotation = game.physics.arcade.angleToPointer(player);
 
-      game.physics.arcade.collide(player, platforms);
+                    bullet.reset(player.x + 25, player.y + 15);
+                    game.physics.arcade.moveToPointer(bullet, 300);
+                    score -= 1;
+                    scoreText.text = 'Score: ' + score;
+                }
 
-    game.physics.arcade.collide(enemies, platforms);
-    //  Checks to see if the player overlaps with any of the stars, if he does call the collectStar function
-    game.physics.arcade.overlap(player, stars, collectStar, null, this);
-    game.physics.arcade.overlap(bullets, platforms, borrarBala, null, this);
-    game.physics.arcade.overlap(enemies, bullets, matarzombie, null, this);
-game.physics.arcade.collide(regadera2, platforms);
-game.physics.arcade.overlap(player, regadera2, recogerRegadera2, null, this); 
-    //  Reset the players velocity (movement)
-    player.body.velocity.x = 0;
+            }
 
-    if (izquierda.isDown)
-    {
-        //  Move to the left
-        player.body.velocity.x = -150;
+            function recogerRegadera(player, regadera) {
 
-        player.animations.play('left');
-    }
-    else if (derecha.isDown)
-    {
-        //  Move to the right
-        player.body.velocity.x = 150;
+                // Removes the star from the screen
+                regadera.kill();
+                game.world.setBounds(0, 0, 1920, 0);
 
-        player.animations.play('right');
-    }
-    else
-    {
-        //  Stand still
-        player.animations.stop();
-
-        player.frame = 4;
-    }
-    
-    //  Allow the player to jump if they are touching the ground.
-    if (arriba.isDown && player.body.touching.down)
-    {
-        player.body.velocity.y = -350;
-    }
-
-   
-}
- setInterval(gotas, 1000);
-    
-    function enemyFires () {
-
-    //  Grab the first bullet we can from the pool
-    enemyBullet = enemyBullets.getFirstExists(false);
-
-    livingEnemies.length=0;
-
-    enemies.forEachAlive(function(rega){
-
-        // put every living enemy in an array
-        livingEnemies.push(rega);
-    });
-
-
-    if (enemyBullet && livingEnemies.length > 0)
-    {
-        
-        var random=game.rnd.integerInRange(0,livingEnemies.length-1);
-
-        // randomly select one of them
-        var shooter1=livingEnemies[random];
-        var shooter2=livingEnemies[random];
-
-        // And fire the bullet from this enemy
-        enemyBullet.reset(shooter1.body.x, shooter1.body.y,true);
-        console.log(enemyBullet.reset.exists);
-        game.physics.arcade.moveToObject(enemyBullet,player,400);
-        firingTimer = game.time.now + 2000;
-    }
-    
-
-
-}
-function enemyHitsPlayer (player,bullet) {
-    
-    bullet.kill();
-
-    live = lives.getFirstAlive();
-
-    if (live)
-    {
-        live.kill();
-    }
-
-    //  And create an explosion :)
-   /* var explosion = explosions.getFirstExists(false);
-    explosion.reset(player.body.x, player.body.y);
-    explosion.play('kaboom', 30, false, true);
-*/
-    // When the player dies
-    if (lives.countLiving() < 1)
-    {
-        if(player.position.x > 390 && player.position.x < 1520)
-        {
-            stateText.position.x = player.position.x;
-        }
-        if(player.position.x > 1520 && player.position.x < 1920)
-        {
-            stateText.position.x = player.position.x-300;
-        }
-        player.kill();
-        enemyBullets.callAll('kill');
-        score = 0;
-        enemies.callAll('kill');
-        stateText.text=" GAME OVER";
-        stateText.visible = true;
-
-    }
-
-}
-function collectStar (player, star) {
-    
-    // Removes the star from the screen
-    star.kill();
-
-    //  Add and update the score
-    score += 1;
-    scoreText.text = 'Score: ' + score;
-}
-function borrarBala (bullets, platforms) {
+            }
+ function matartorre (bullets, torre) {
     // Removes the star from the screen
     bullets.kill();
+        torre.kill();
 }
-    function matarzombie (bullets, enemy) {
-    // Removes the star from the screen
-    bullets.kill();
-        enemy.kill();
-}
-    function render() {
 
-    game.debug.text('Active Bullets: ' + bullets.countLiving() + ' / ' + bullets.total, 32, 32);
-    game.debug.spriteInfo(sprite, 32, 450);
-
-}
-    function fire() {
-    if (game.time.now > nextFire && bullets.countDead() > 0){
-        nextFire = game.time.now + fireRate;
-        var bullet = bullets.getFirstDead();
-        bullet.rotation = game.physics.arcade.angleToPointer(player);
-
-        bullet.reset(player.x+25, player.y+15);
-        game.physics.arcade.moveToPointer(bullet, 300);
-        score-=1;
-        scoreText.text = 'Score: ' + score;
-    }
-
-}
-    function recogerRegadera (player, regadera) {
+function recogerRegadera3 (player, regadera3) {
     
     // Removes the star from the screen
-    regadera.kill();
-    game.world.setBounds(0, 0, 1920, 0);
+    regadera3.kill();
+    game.world.setBounds(0, 0, 3020, 0);
 
 }
-    function recogerRegadera2 (player, regadera2) {
-    
-    // Removes the star from the screen
-    regadera2.kill();
-    game.world.setBounds(0, 0, 2500, 0);
+            function recogerRegadera2(player, regadera2) {
 
-}
+                // Removes the star from the screen
+                regadera2.kill();
+                game.world.setBounds(0, 0, 3020, 0);
 
-    function gotas(){
-    for (var i = 0; i < 5; i++)
-    {
-        //  Create a star inside of the 'stars' group
-        var star = stars.create((i+1)*(Math.random()*2500) , -100, 'star');
-      
+            }
+
+            function gotas() {
+                for (var i = 0; i < 5; i++) {
+                    //  Create a star inside of the 'stars' group
+                    var star = stars.create((i + 1) * (Math.random() * 2500), -100, 'star');
+
+                    //  Let gravity do its thing
+                    star.body.gravity.y = ((i + 500) * Math.random() * 1);
+
+
+
+                    //  This just gives each star a slightly random bounce value
+                    //star.body.bounce.y = 0.7 + Math.random() * 0.2;
+                }
+            }
+
+            function explosionOk(invader) {
+
+                invader.anchor.x = 0.5;
+                invader.anchor.y = 0.5;
+                invader.animations.add('kaboom');
+
+            }
+            function crearzombieinicio1(){
+          //  Create a star inside of the 'stars' group
+        var enemy = enemies.create(1000, 500, 'zombie');
+        enemy.animations.add('right', [1,2,3,4,5,6,7,8,9,10,11,12,13], 10, true);
+        enemy.animations.play('right');
         //  Let gravity do its thing
-        star.body.gravity.y =((i+500)* Math.random()*1);
-        
-      
+        enemy.body.gravity.y = 300;
 
         //  This just gives each star a slightly random bounce value
-        //star.body.bounce.y = 0.7 + Math.random() * 0.2;
+        enemy.body.bounce.y = 0;
+        enemy.body.velocity.x = -120;
+        enemy.animations.add('walk');
+        enemy.animations.play('walk', 20, true);        
     }
-}
+    function crearzombieinicio2(){
+          //  Create a star inside of the 'stars' group
+        var enemy = enemies.create(1500, 500, 'zombie');
+        enemy.animations.add('right', [1,2,3,4,5,6,7,8,9,10,11,12,13], 10, true);
+        enemy.animations.play('right');
+        //  Let gravity do its thing
+        enemy.body.gravity.y = 300;
 
+        //  This just gives each star a slightly random bounce value
+        enemy.body.bounce.y = 0;
+        enemy.body.velocity.x = -120;
+        enemy.animations.add('walk');
+        enemy.animations.play('walk', 20, true);        
+    }
+    function crearzombieinicio3(){
+          //  Create a star inside of the 'stars' group
+        var enemy = enemies.create(2000, 500, 'zombie');
+        enemy.animations.add('right', [1,2,3,4,5,6,7,8,9,10,11,12,13], 10, true);
+        enemy.animations.play('right');
+        //  Let gravity do its thing
+        enemy.body.gravity.y = 300;
 
-
-</script>
-</div>
+        //  This just gives each star a slightly random bounce value
+        enemy.body.bounce.y = 0;
+        enemy.body.velocity.x = -120;
+        enemy.animations.add('walk');
+        enemy.animations.play('walk', 20, true);        
+    }
+        </script>
+    </div>
 </body>
+
 </html>
